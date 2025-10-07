@@ -99,23 +99,69 @@ function clearUnderlines() {
     underlineElements = [];
 }
 
-function generateWavyPath(width: number, height: number, wavelength: number): string {
-    // Generate smooth sine wave path for spellcheck-style underline
+const canonicalCubicBezierControlPointDistanceForAQuarterCircleArc = (4 / 3) * (Math.sqrt(2) - 1);
+
+function generateWavyPath(width: number, height: number, wavelength: number, offsetY = 0): string {
     const amplitude = height / 2;
-    const numWaves = Math.ceil(width / wavelength);
-    let path = `M 0 ${amplitude}`;
+    const baseline = offsetY + amplitude;
 
-    for (let i = 0; i <= numWaves; i++) {
-        const x = i * wavelength;
-        const controlX1 = x + wavelength / 4;
-        const controlY1 = 0;
-        const controlX2 = x + (wavelength * 3) / 4;
-        const controlY2 = height;
-        const endX = x + wavelength;
-        const endY = amplitude;
+    const q = wavelength / 4;
+    const fullWaves = Math.floor(width / wavelength);
+    const remaining = width - fullWaves * wavelength;
 
-        // Create smooth bezier curve for each wave
-        path += ` C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+    let path = `M 0 ${baseline}`;
+    const addCubic = (x0: number, y0: number, x1: number, y1: number) => {
+        const dx = x1 - x0;
+        const cp1x = x0 + canonicalCubicBezierControlPointDistanceForAQuarterCircleArc * dx;
+        const cp1y = y0;
+        const cp2x = x1 - canonicalCubicBezierControlPointDistanceForAQuarterCircleArc * dx;
+        const cp2y = y1;
+        path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x1} ${y1}`;
+    };
+
+    for (let i = 0; i < fullWaves; i++) {
+        const startX = i * wavelength;
+        const x0 = startX;
+        const x1 = startX + q;
+        const x2 = startX + 2 * q;
+        const x3 = startX + 3 * q;
+        const x4 = startX + 4 * q;
+
+        addCubic(x0, baseline, x1, baseline - amplitude);
+        addCubic(x1, baseline - amplitude, x2, baseline);
+        addCubic(x2, baseline, x3, baseline + amplitude);
+        addCubic(x3, baseline + amplitude, x4, baseline);
+    }
+
+    if (remaining > 1e-9) {
+        const startX = fullWaves * wavelength;
+        const quarterWidths = [
+            Math.min(q, remaining),
+            Math.min(q, Math.max(0, remaining - q)),
+            Math.min(q, Math.max(0, remaining - 2 * q)),
+            Math.min(q, Math.max(0, remaining - 3 * q)),
+        ];
+
+        const ys = [
+            baseline - amplitude,
+            baseline,
+            baseline + amplitude,
+            baseline,
+        ];
+
+        let curX = startX;
+        let curY = baseline;
+        for (let qi = 0; qi < 4; qi++) {
+            const w = quarterWidths[qi];
+            if (w <= 0) break;
+            const nextX = curX + w;
+            const nextY = ys[qi];
+
+            addCubic(curX, curY, nextX, nextY);
+
+            curX = nextX;
+            curY = nextY;
+        }
     }
 
     return path;
