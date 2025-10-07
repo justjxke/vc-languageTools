@@ -1,0 +1,211 @@
+/* the fucking whatchmacallit 3000 */
+.lt-popup-modern {
+    background: var(--background-floating, #18191c);
+    border: 1px solid var(--background-tertiary, #3f4147);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    animation: lt-popup-fadein 0.2s ease-out;
+    min-width: 280px;
+    max-width: 420px;
+}
+
+@keyframes lt-popup-fadein {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.lt-popup-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    padding: 2px 0;
+    user-select: none;
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+}
+
+.lt-popup-drag-handle:hover {
+    opacity: 0.7;
+}
+
+.lt-popup-drag-handle:active {
+    cursor: grabbing;
+    opacity: 1;
+}
+
+.lt-popup-drag-handle svg {
+    display: block;
+}
+
+.lt-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px 0;
+    background: transparent;
+    border-bottom: none;
+    position: relative;
+}
+
+.lt-popup-dict-icon-btn {
+    position: absolute;
+    top: 6px;
+    right: 52px;
+    background: transparent;
+    border: 1px solid var(--background-tertiary, #3f4147);
+    color: var(--interactive-normal, #b9bbbe);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    margin: 0;
+}
+
+.lt-popup-dict-icon-btn:hover {
+    background: var(--background-tertiary, #3f4147);
+    border-color: var(--background-modifier-accent, #4f545c);
+    color: var(--interactive-hover, #dcddde);
+}
+
+.lt-popup-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--interactive-normal, #b9bbbe);
+    cursor: pointer;
+    font-size: 28px;
+    line-height: 1;
+    padding: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    margin: 0;
+}
+
+.lt-popup-close:hover {
+    background: var(--background-modifier-hover, rgb(79 84 92 / 48%));
+    color: var(--interactive-hover, #dcddde);
+}
+
+.lt-popup-top-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-top: 2px;
+}
+
+.lt-popup-logo {
+    width: 28px;
+    height: 28px;
+    background: #1e1f22;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.lt-popup-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--header-primary, #fff);
+    flex: 1;
+}
+
+.lt-popup-body {
+    padding: 0 20px 18px;
+}
+
+.lt-popup-issue-type {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #949ba4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.lt-popup-message {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-normal, #dbdee1);
+    margin-bottom: 16px;
+}
+
+.lt-popup-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.lt-popup-suggestion-btn {
+    background: var(--brand-experiment, #5865f2);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.lt-popup-suggestion-btn:hover {
+    background: var(--brand-experiment-560, #4752c4);
+    transform: translateY(-1px);
+}
+
+.lt-popup-suggestion-btn:active {
+    transform: translateY(0);
+}
+
+.lt-popup-ignore-btn {
+    background: transparent;
+    border: 1px solid var(--background-tertiary, #3f4147);
+    color: var(--text-normal, #dbdee1);
+    font-weight: 500;
+}
+
+.lt-popup-ignore-btn:hover {
+    background: var(--background-tertiary, #3f4147);
+    border-color: var(--background-modifier-accent, #4f545c);
+    transform: translateY(-1px);
+}
+
+/* dictionary modal chip input thingamajig */
+.lt-dictionary-input::placeholder {
+    color: var(--text-muted, #949ba4);
+    opacity: 1;
+}
+
+.lt-dictionary-footer {
+    gap: 12px;
+}
