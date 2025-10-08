@@ -6,7 +6,6 @@
 
 import "./style.css";
 
-import { EquicordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
@@ -29,6 +28,16 @@ let popupElement: HTMLDivElement | null = null;
 let underlineElements: HTMLElement[] = [];
 const sessionIgnoredWords: Set<string> = new Set(); // temporary ignore per message
 let lastTextLength: number = 0; // track text length to detect message sends (cuz when message sent, no more letters)
+
+function getCurrentTextArea(): HTMLElement | null {
+    // always query for the current text area to handle React re-renders
+    const textArea = document.querySelector('[role="textbox"][contenteditable="true"]') as HTMLElement;
+    if (textArea && textArea.isConnected) {
+        currentTextArea = textArea;
+        return textArea;
+    }
+    return null;
+}
 
 function getTextFromEditor(editor: HTMLElement): string {
     return editor.textContent || "";
@@ -363,18 +372,18 @@ function getInfoUrl(match: LanguageToolMatch): string | null {
 }
 
 function remToPx(rem: number) {
-  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return rem * rootFontSize;
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return rem * rootFontSize;
 }
 
 const popupWidth = 5;
 const popupHeight = 3;
 
-const popupHeightAsPx = remToPx(popupHeight);
-const popupWidthAsPx = remToPx(popupWidth);
-
 function showTooltip(position: UnderlinePosition, x: number, y: number) {
     hideTooltip();
+
+    const popupHeightAsPx = remToPx(popupHeight);
+    const popupWidthAsPx = remToPx(popupWidth);
 
     const popup = document.createElement("div");
     popup.className = "lt-popup-modern";
@@ -389,7 +398,7 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
     popup.innerHTML = `
         <div class="lt-popup-header">
             <div class="lt-popup-drag-handle" title="Drag to move">
-                <svg width="16" height="6" viewBox="0 0 16 6" fill="currentColor" opacity="0.3">
+                <svg width="16" height="6" viewBox="0 0 16 6" fill="#aaa" opacity="0.6">
                     <circle cx="3" cy="3" r="1.5"/>
                     <circle cx="8" cy="3" r="1.5"/>
                     <circle cx="13" cy="3" r="1.5"/>
@@ -684,13 +693,19 @@ function handleTextAreaClick(e: MouseEvent) {
         positionsCount: currentPositions.length
     });
 
+    // get the current valid text area (handles React re-renders)
+    const textArea = getCurrentTextArea();
+    if (!textArea) return;
+
+    const textAreaTop = textArea.getBoundingClientRect().top;
+
     // get the click position in the text
     const range = document.caretRangeFromPoint?.(e.clientX, e.clientY);
     if (!range) return;
 
     // calculate which character was clicked
     const preRange = document.createRange();
-    preRange.selectNodeContents(currentTextArea!);
+    preRange.selectNodeContents(textArea);
     preRange.setEnd(range.startContainer, range.startOffset);
     const clickPosition = preRange.toString().length;
 
@@ -698,7 +713,7 @@ function handleTextAreaClick(e: MouseEvent) {
     for (const pos of currentPositions) {
         if (clickPosition >= pos.start && clickPosition <= pos.end) {
             logger.info("Clicked on underlined word at position:", clickPosition);
-            showTooltip(pos, e.clientX, currentTextArea!.getBoundingClientRect().top);
+            showTooltip(pos, e.clientX, textAreaTop);
             e.stopPropagation();
             e.preventDefault();
             return;
@@ -768,7 +783,10 @@ export function openDictionaryModal() {
 export default definePlugin({
     name: "LanguageTool",
     description: "Real-time grammar and spell checking using LanguageTool API as you type",
-    authors: [EquicordDevs.justjxke],
+    authors: [
+        { name: "justjxke", id: 852558183087472640n },
+        { name: "davilarek", id: 568109529884000260n }
+    ],
     settings,
 
     toolboxActions: {
