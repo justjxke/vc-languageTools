@@ -317,6 +317,17 @@ function getInfoUrl(match: LanguageToolMatch): string | null {
     return "https://languagetool.org/insights/";
 }
 
+function remToPx(rem: number) {
+  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return rem * rootFontSize;
+}
+
+const popupWidth = 5;
+const popupHeight = 3;
+
+const popupHeightAsPx = remToPx(popupHeight);
+const popupWidthAsPx = remToPx(popupWidth);
+
 function showTooltip(position: UnderlinePosition, x: number, y: number) {
     hideTooltip();
 
@@ -365,28 +376,13 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
         </div>
     `;
 
-    // position the popup above the word
-    const popupWidth = 320;
-    const popupHeight = 200; // approximate
-    const minBottomMargin = 140; // so its not on the fucking chatbar
-
-    let popupX = x - popupWidth / 2;
-    let popupY = y - popupHeight - 10;
+    let popupX = x - popupWidthAsPx / 2;
+    let popupY = y - popupHeightAsPx - 10;
 
     // adjust horizontal position if going off screen
     if (popupX < 10) popupX = 10;
-    if (popupX + popupWidth > window.innerWidth - 10) {
-        popupX = window.innerWidth - popupWidth - 10;
-    }
-
-    // ensure popup doesn't get too close to bottom (chatbar area)
-    const maxBottomY = window.innerHeight - minBottomMargin;
-    const popupBottom = popupY + popupHeight;
-
-    if (popupBottom > maxBottomY) {
-        // move popup higher to avoid chatbar
-        popupY = maxBottomY - popupHeight;
-        logger.info(`[Popup] Adjusted Y to avoid chatbar: ${popupY}`);
+    if (popupX + popupWidthAsPx > window.innerWidth - 10) {
+        popupX = window.innerWidth - popupWidthAsPx - 10;
     }
 
     // If still too high up, show it above the word with more spacing
@@ -400,7 +396,7 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
         top: ${popupY}px;
         left: ${popupX}px;
         z-index: 10000;
-        width: ${popupWidth}px;
+        width: ${popupWidth}rem;
     `;
 
     document.body.appendChild(popup);
@@ -421,8 +417,9 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
         isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
-        popupStartX = popupX;
-        popupStartY = popupY;
+        const rect = popup.getBoundingClientRect();
+        popupStartX = rect.left;
+        popupStartY = rect.top;
         dragHandle.style.cursor = "grabbing";
         e.preventDefault();
     });
@@ -656,7 +653,7 @@ function handleTextAreaClick(e: MouseEvent) {
     for (const pos of currentPositions) {
         if (clickPosition >= pos.start && clickPosition <= pos.end) {
             logger.info("Clicked on underlined word at position:", clickPosition);
-            showTooltip(pos, e.clientX, e.clientY);
+            showTooltip(pos, e.clientX, currentTextArea!.getBoundingClientRect().top);
             e.stopPropagation();
             e.preventDefault();
             return;
