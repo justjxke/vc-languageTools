@@ -225,7 +225,6 @@ function addVisualUnderlines(positions: UnderlinePosition[], text: string) {
                 width: ${rect.width}px;
                 height: ${rect.height + 4}px;
                 pointer-events: ${pointerEvents};
-                z-index: 9999;
                 cursor: default;
                 display: flex;
                 flex-direction: column;
@@ -234,7 +233,7 @@ function addVisualUnderlines(positions: UnderlinePosition[], text: string) {
 
             logger.info(`[Underlines] Created underline at x=${rect.left}, y=${rect.bottom}, width=${rect.width}, color=${color}`);
 
-            document.body.appendChild(container);
+            currentTextArea?.parentElement?.parentElement!.append(container);
             underlineElements.push(container);
         }
     });
