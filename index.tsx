@@ -371,6 +371,32 @@ function getInfoUrl(match: LanguageToolMatch): string | null {
     return "https://languagetool.org/insights/";
 }
 
+function highlightDifferences(original: string, replacement: string): string {
+    if (!original || !replacement) {
+        return escapeHtml(replacement);
+    }
+    const origEsc = escapeHtml(original);
+    const replEsc = escapeHtml(replacement);
+    let start = 0;
+    const len = Math.min(origEsc.length, replEsc.length);
+    while (start < len && origEsc[start] === replEsc[start]) {
+        start++;
+    }
+    let endOrig = origEsc.length;
+    let endRepl = replEsc.length;
+    while (endOrig > start && endRepl > start && origEsc[endOrig - 1] === replEsc[endRepl - 1]) {
+        endOrig--;
+        endRepl--;
+    }
+    if (start >= endRepl) {
+        return `<strong>${replEsc}</strong>`;
+    }
+    const prefix = replEsc.substring(0, start);
+    const changed = replEsc.substring(start, endRepl);
+    const suffix = replEsc.substring(endRepl);
+    return `${prefix}<strong>${changed}</strong>${suffix}`;
+}
+
 function remToPx(rem: number) {
     const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
     return rem * rootFontSize;
@@ -422,7 +448,7 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
             <div class="lt-popup-suggestions">
                 ${replacements.map(r => `
                     <button class="lt-popup-suggestion-btn" data-replacement="${escapeHtml(r)}">
-                        ${escapeHtml(r)}
+                        ${highlightDifferences(word, r)}
                     </button>
                 `).join("")}
                 <button class="lt-popup-suggestion-btn lt-popup-ignore-btn" data-action="ignore">Ignore</button>
@@ -561,7 +587,7 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
                             handleTextChange(currentTextArea);
                         }
                     }, 300);
-                }, 10);
+                }, 0);
                 // comments galore
                 hideTooltip();
             } else {
