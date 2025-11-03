@@ -73,7 +73,7 @@ function setCursorPosition(position: number) {
                 selection.addRange(range);
             }
         } catch (e) {
-            logger.warn("Failed to restore cursor position:", e);
+            // Failed to restore cursor position
         }
     }, 50);
 }
@@ -182,28 +182,21 @@ function addVisualUnderlines(positions: UnderlinePosition[], text: string) {
     // clear existing underlines
     clearUnderlines();
 
-    logger.info(`[Underlines] Adding ${positions.length} visual underlines`);
-
     positions.forEach((pos, idx) => {
         const word = text.substring(pos.start, pos.end);
         const color = getColorForType(pos.type);
         const style = settings.store.visualUnderlineStyle;
 
-        logger.info(`[Underlines] Processing word #${idx}: "${word}" at positions ${pos.start}-${pos.end}, type: ${pos.type}`);
-
         // find the DOM range for this word
         const range = findRangeForPosition(pos.start, pos.end);
         if (!range) {
-            logger.warn(`[Underlines] Could not find range for position ${pos.start}-${pos.end}, word: "${word}"`);
             return;
         }
 
         // get the bounding rectangles for the word (handles multi-line)
         const rects = range.getClientRects();
-        logger.info(`[Underlines] Found ${rects.length} rects for word "${word}"`);
 
         if (rects.length === 0) {
-            logger.warn(`[Underlines] No rectangles returned for word "${word}"`);
             return;
         }
 
@@ -212,7 +205,6 @@ function addVisualUnderlines(positions: UnderlinePosition[], text: string) {
             const rect = rects[i];
 
             if (rect.width === 0 || rect.height === 0) {
-                logger.warn(`[Underlines] Empty rect for word "${word}": width=${rect.width}, height=${rect.height}`);
                 continue;
             }
 
@@ -286,55 +278,34 @@ function addVisualUnderlines(positions: UnderlinePosition[], text: string) {
                 justify-content: flex-end;
             `;
 
-            logger.info(`[Underlines] Created underline at x=${rect.left}, y=${rect.bottom}, width=${rect.width}, color=${color}`);
-
             currentTextArea?.parentElement?.parentElement!.append(container);
             underlineElements.push(container);
         }
     });
-
-    logger.info(`[Underlines] Successfully created ${underlineElements.length} underline elements`);
-
-    // Debug: Log all underline elements
-    if (underlineElements.length > 0) {
-        logger.info("[Underlines] Underline elements in DOM:", underlineElements.map(el => ({
-            word: el.dataset.ltWord,
-            visible: el.offsetParent !== null,
-            rect: el.getBoundingClientRect()
-        })));
-    }
 }
 
 function findRangeForPosition(start: number, end: number): Range | null {
     if (!currentTextArea) {
-        logger.warn("[Underlines] No currentTextArea available");
         return null;
     }
 
     try {
-        logger.info(`[Underlines] Finding range for positions ${start}-${end}`);
         const startNode = findTextNode(currentTextArea, start);
         const endNode = findTextNode(currentTextArea, end);
 
         if (!startNode) {
-            logger.warn(`[Underlines] Could not find start node at position ${start}`);
             return null;
         }
         if (!endNode) {
-            logger.warn(`[Underlines] Could not find end node at position ${end}`);
             return null;
         }
-
-        logger.info(`[Underlines] Found nodes - start: ${startNode.node.nodeName} offset ${startNode.offset}, end: ${endNode.node.nodeName} offset ${endNode.offset}`);
 
         const range = document.createRange();
         range.setStart(startNode.node, startNode.offset);
         range.setEnd(endNode.node, endNode.offset);
 
-        logger.info("[Underlines] Created range successfully");
         return range;
     } catch (e) {
-        logger.warn("[Underlines] Error creating range:", e);
         return null;
     }
 }
@@ -536,11 +507,8 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
     }, { capture: true });
 
     const suggestionButtons = popup.querySelectorAll("[data-replacement]");
-    logger.info(`Found ${suggestionButtons.length} suggestion buttons`);
 
     suggestionButtons.forEach((btn, idx) => {
-        logger.info(`Button ${idx} data-replacement:`, (btn as HTMLElement).dataset.replacement);
-
         // use mousedown event (click doesn't work reliably)
         btn.addEventListener("mousedown", e => {
             e.preventDefault();
@@ -553,7 +521,6 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
                 const cursorPos = getCursorPosition();
 
                 const newText = applySuggestion(currentText, match, replacement);
-                logger.info("Applying suggestion:", { old: currentText, new: newText, cursorPos });
 
                 // calculate new cursor position (adjust for length difference)
                 const lengthDiff = replacement.length - match.length;
@@ -591,7 +558,7 @@ function showTooltip(position: UnderlinePosition, x: number, y: number) {
                 // comments galore
                 hideTooltip();
             } else {
-                logger.error("No current text area!");
+                // No current text area
             }
         }, { capture: true });
     });
@@ -655,9 +622,7 @@ async function handleTextChange(textArea: HTMLElement) {
     const isEmpty = trimmedText.length === 0 || trimmedText === "\uFEFF"; // Check for zero-width char
 
     if (lastTextLength > 5 && isEmpty) {
-        logger.info("[Ignore] Message sent detected (text cleared), clearing ignore list. Had:", Array.from(sessionIgnoredWords));
         sessionIgnoredWords.clear();
-        logger.info("[Ignore] Ignore list cleared");
     }
     lastTextLength = trimmedText.length;
 
@@ -668,7 +633,6 @@ async function handleTextChange(textArea: HTMLElement) {
     }
 
     if (text.length > settings.store.maxCharacters) {
-        logger.warn(`Text too long: ${text.length} characters`);
         return;
     }
 
@@ -677,7 +641,6 @@ async function handleTextChange(textArea: HTMLElement) {
     }
 
     debounceTimer = setTimeout(async () => {
-        logger.info(`Checking text: "${text.substring(0, 50)}..."`);
         const response = await checkText(text);
 
         if (response) {
@@ -691,12 +654,9 @@ async function handleTextChange(textArea: HTMLElement) {
 
             currentPositions = filteredPositions;
 
-            logger.info(`API returned ${response.matches.length} matches, filtered to ${filteredPositions.length} positions`);
-
             addVisualUnderlines(filteredPositions, text);
             addClickHandlers(textArea, filteredPositions, text);
         } else {
-            logger.warn("No response from API");
             currentPositions = [];
             clearUnderlines();
         }
@@ -707,17 +667,10 @@ function addClickHandlers(textArea: HTMLElement, positions: UnderlinePosition[],
     // add click handler to detect clicks on underlined words
     textArea.removeEventListener("click", handleTextAreaClick);
     textArea.addEventListener("click", handleTextAreaClick);
-    logger.info("[LanguageTool] Click handlers added to text area");
 }
 
 function handleTextAreaClick(e: MouseEvent) {
     const target = e.target as HTMLElement;
-
-    logger.info("Text area clicked", {
-        target: target.tagName,
-        textContent: target.textContent?.substring(0, 20),
-        positionsCount: currentPositions.length
-    });
 
     // get the current valid text area (handles React re-renders)
     const textArea = getCurrentTextArea();
@@ -738,7 +691,6 @@ function handleTextAreaClick(e: MouseEvent) {
     // find if we clicked on an underlined word
     for (const pos of currentPositions) {
         if (clickPosition >= pos.start && clickPosition <= pos.end) {
-            logger.info("Clicked on underlined word at position:", clickPosition);
             showTooltip(pos, e.clientX, textAreaTop);
             e.stopPropagation();
             e.preventDefault();
@@ -750,13 +702,11 @@ function handleTextAreaClick(e: MouseEvent) {
 function attachToTextArea(textArea: HTMLElement) {
     if (currentTextArea === textArea) return;
 
-    logger.info("Attaching to text area");
     currentTextArea = textArea;
 
     // disable native spellcheck if setting is enabled (never checked this works lol)
     if (settings.store.disableNativeSpellcheck) {
         textArea.setAttribute("spellcheck", "false");
-        logger.info("Disabled native spellcheck on text area");
     }
 
     const observer = new MutationObserver(() => {
@@ -857,7 +807,6 @@ export default definePlugin({
             // re-enable native spellcheck if it was disabled (once again not sure if this works)
             if (settings.store.disableNativeSpellcheck) {
                 currentTextArea.setAttribute("spellcheck", "true");
-                logger.info("Re-enabled native spellcheck");
             }
         }
 
@@ -868,6 +817,5 @@ export default definePlugin({
         currentPositions = [];
         currentText = "";
 
-        logger.info("LanguageTool plugin stopped");
     }
 });
